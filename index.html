@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ALIF | Catch the Orbs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --primary: #38bdf8;
+  --bg: #020617;
+  --panel: #0f172a;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  background: radial-gradient(circle at top, #020617, #000);
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ---------- LAYOUT ---------- */
+.game {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* ---------- HEADER ---------- */
+header {
+  text-align: center;
+  padding-top: 20px;
+}
+
+header h1 {
+  font-size: 3.2rem;
+  letter-spacing: 0.45rem;
+  text-shadow: 0 0 30px rgba(56,189,248,0.7);
+}
+
+header p {
+  margin-top: 8px;
+  color: var(--muted);
+  letter-spacing: 0.15rem;
+}
+
+/* ---------- TRACKER ---------- */
+.tracker {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 18px;
+}
+
+.tracker span {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: 0.3s;
+}
+
+.tracker span.active {
+  color: var(--primary);
+  text-shadow: 0 0 18px rgba(56,189,248,0.9);
+}
+
+/* ---------- CONTROLS ---------- */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.controls button {
+  padding: 10px 24px;
+  border-radius: 14px;
+  border: none;
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.controls button:hover {
+  background: var(--primary);
+  color: #020617;
+}
+
+/* ---------- GAME AREA ---------- */
+#gameArea {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 65%;
+  overflow: hidden;
+}
+
+/* ---------- BALL LETTER ---------- */
+.ball {
+  position: absolute;
+  bottom: -80px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, #7dd3fc, #0284c7);
+  box-shadow: 
+    0 0 20px rgba(56,189,248,0.8),
+    inset 0 0 12px rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #020617;
+  cursor: pointer;
+  user-select: none;
+  animation: rise linear forwards;
+}
+
+@keyframes rise {
+  from { transform: translateY(0); }
+  to { transform: translateY(-120vh); }
+}
+
+/* ---------- STATUS ---------- */
+.status {
+  position: absolute;
+  bottom: 14px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  letter-spacing: 0.12rem;
+}
+
+/* ---------- WIN ---------- */
+.win {
+  position: absolute;
+  inset: 0;
+  background: rgba(2,6,23,0.96);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.win h2 {
+  font-size: 3rem;
+  color: var(--primary);
+  margin-bottom: 14px;
+}
+
+.win p {
+  font-size: 1.2rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+  <header>
+    <h1>ALIF</h1>
+    <p>Catch the Orbs</p>
+  </header>
+
+  <div class="tracker">
+    <span id="A">A</span>
+    <span id="L">L</span>
+    <span id="I">I</span>
+    <span id="F">F</span>
+  </div>
+
+  <div class="controls">
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('medium')">Medium</button>
+    <button onclick="startGame('hard')">Hard</button>
+  </div>
+
+  <div id="gameArea"></div>
+
+  <div class="status">
+    Tap balls or swipe up to catch
+  </div>
+
+  <div class="win" id="win">
+    <h2>ALIF COMPLETED</h2>
+    <p id="time"></p>
+    <p>Unity • Discipline • Purpose</p>
+  </div>
+
+</div>
+
+<script>
+const target = ["A","L","I","F"];
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let index = 0;
+let interval;
+let startTime;
+let spawnRate = 400;
+let alifChance = 0.6;
+
+const area = document.getElementById("gameArea");
+const win = document.getElementById("win");
+const timeEl = document.getElementById("time");
+
+function startGame(level) {
+  clearInterval(interval);
+  area.innerHTML = "";
+  index = 0;
+  win.style.display = "none";
+  target.forEach(l => document.getElementById(l).classList.remove("active"));
+
+  if (level === "easy") {
+    spawnRate = 380;
+    alifChance = 0.75;
+  } else if (level === "medium") {
+    spawnRate = 260;
+    alifChance = 0.35;
+  } else {
+    spawnRate = 180;
+    alifChance = 0.15;
+  }
+
+  startTime = Date.now();
+  interval = setInterval(spawnBall, spawnRate);
+}
+
+function randomLetter() {
+  if (Math.random() < alifChance) {
+    return target[Math.floor(Math.random() * 4)];
+  }
+  return alphabet[Math.floor(Math.random() * alphabet.length)];
+}
+
+function spawnBall() {
+  const ball = document.createElement("div");
+  ball.className = "ball";
+  ball.textContent = randomLetter();
+  ball.style.left = Math.random() * (window.innerWidth - 70) + "px";
+  ball.style.animationDuration = "4s";
+
+  ball.onclick = () => catchBall(ball);
+  area.appendChild(ball);
+
+  setTimeout(() => ball.remove(), 4000);
+}
+
+function catchBall(ball) {
+  if (ball.textContent === target[index]) {
+    document.getElementById(target[index]).classList.add("active");
+    index++;
+    if (index === 4) finish();
+  }
+  ball.remove();
+}
+
+function finish() {
+  clearInterval(interval);
+  const timeTaken = ((Date.now() - startTime) / 1000).toFixed(2);
+  timeEl.textContent = `Time Taken: ${timeTaken} seconds`;
+  win.style.display = "flex";
+}
+
+/* ---------- MOBILE SWIPE ---------- */
+let startY = 0;
+document.addEventListener("touchstart", e => startY = e.touches[0].clientY);
+document.addEventListener("touchend", e => {
+  if (startY - e.changedTouches[0].clientY > 60) {
+    autoCatch();
+  }
+});
+
+function autoCatch() {
+  const balls = document.querySelectorAll(".ball");
+  if (!balls.length) return;
+  catchBall(balls[0]);
+}
+</script>
+
+</body>
+</html>
